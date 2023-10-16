@@ -59,13 +59,13 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635
 	github.com/ulikunitz/xz v0.5.11
-	github.com/vbauerster/mpb/v8 v8.6.0
+	github.com/vbauerster/mpb/v8 v8.6.2
 	github.com/vishvananda/netlink v1.2.1-beta.2
 	go.etcd.io/bbolt v1.3.7
 	golang.org/x/exp v0.0.0-20230801115018-d63ba01acd4b
 	golang.org/x/net v0.14.0
 	golang.org/x/sync v0.3.0
-	golang.org/x/sys v0.11.0
+	golang.org/x/sys v0.13.0
 	golang.org/x/term v0.11.0
 	golang.org/x/text v0.12.0
 	google.golang.org/protobuf v1.31.0
