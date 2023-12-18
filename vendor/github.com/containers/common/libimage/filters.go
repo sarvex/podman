@@ -1,3 +1,6 @@
+//go:build !remote
+// +build !remote
+
 package libimage
 
 import (
@@ -11,7 +14,6 @@ import (
 	filtersPkg "github.com/containers/common/pkg/filters"
 	"github.com/containers/common/pkg/timetype"
 	"github.com/containers/image/v5/docker/reference"
-	"github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
 )
 
@@ -110,7 +112,6 @@ func (r *Runtime) compileImageFilters(ctx context.Context, options *ListImagesOp
 		key = split[0]
 		value = split[1]
 		switch key {
-
 		case "after", "since":
 			img, err := r.time(key, value)
 			if err != nil {
@@ -244,7 +245,7 @@ func (r *Runtime) until(value string) (time.Time, error) {
 func (r *Runtime) time(key, value string) (*Image, error) {
 	img, _, err := r.LookupImage(value, nil)
 	if err != nil {
-		return nil, fmt.Errorf("could not find local image for filter filter %q=%q: %w", key, value, err)
+		return nil, fmt.Errorf("could not find local image for filter %q=%q: %w", key, value, err)
 	}
 	return img, nil
 }
@@ -291,7 +292,7 @@ func filterReferences(r *Runtime, value string) filterFunc {
 			refString := ref.String() // FQN with tag/digest
 			candidates := []string{refString}
 
-			// Split the reference into 3 components (twice if diggested/tagged):
+			// Split the reference into 3 components (twice if digested/tagged):
 			// 1) Fully-qualified reference
 			// 2) Without domain
 			// 3) Without domain and path
@@ -395,18 +396,17 @@ func filterDangling(ctx context.Context, value bool, tree *layerTree) filterFunc
 // filterID creates an image-ID filter for matching the specified value.
 func filterID(value string) filterFunc {
 	return func(img *Image) (bool, error) {
-		return img.ID() == value, nil
+		return strings.HasPrefix(img.ID(), value), nil
 	}
 }
 
 // filterDigest creates a digest filter for matching the specified value.
 func filterDigest(value string) (filterFunc, error) {
-	d, err := digest.Parse(value)
-	if err != nil {
-		return nil, fmt.Errorf("invalid value %q for digest filter: %w", value, err)
+	if !strings.HasPrefix(value, "sha256:") {
+		return nil, fmt.Errorf("invalid value %q for digest filter", value)
 	}
 	return func(img *Image) (bool, error) {
-		return img.hasDigest(d), nil
+		return img.containsDigestPrefix(value), nil
 	}, nil
 }
 

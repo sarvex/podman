@@ -23,7 +23,7 @@ type netavarkError struct {
 
 func (e *netavarkError) Error() string {
 	ec := ""
-	// only add the exit code the the error message if we have at least info log level
+	// only add the exit code the error message if we have at least info log level
 	// the normal user does not need to care about the number
 	if e.exitCode > 0 && logrus.IsLevelEnabled(logrus.InfoLevel) {
 		ec = " (exit code " + strconv.Itoa(e.exitCode) + ")"
@@ -85,6 +85,9 @@ func (n *netavarkNetwork) execNetavark(args []string, needPlugin bool, stdin, re
 	}
 	if n.dnsBindPort != 0 {
 		env = append(env, "NETAVARK_DNS_PORT="+strconv.Itoa(int(n.dnsBindPort)))
+	}
+	if n.firewallDriver != "" {
+		env = append(env, "NETAVARK_FW="+n.firewallDriver)
 	}
 	return n.execBinary(n.netavarkBinary, append(n.getCommonNetavarkOptions(needPlugin), args...), stdin, result, env)
 }
