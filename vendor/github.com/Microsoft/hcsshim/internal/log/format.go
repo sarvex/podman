@@ -4,16 +4,17 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net"
 	"reflect"
 	"time"
-
-	"github.com/containerd/containerd/log"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 )
 
-const TimeFormat = log.RFC3339NanoFixed
+// TimeFormat is [time.RFC3339Nano] with nanoseconds padded using
+// zeros to ensure the formatted time is always the same number of
+// characters.
+// Based on RFC3339NanoFixed from github.com/containerd/log
+const TimeFormat = "2006-01-02T15:04:05.000000000Z07:00"
 
 func FormatTime(t time.Time) string {
 	return t.Format(TimeFormat)
@@ -68,22 +69,16 @@ func Format(ctx context.Context, v interface{}) string {
 }
 
 func encode(v interface{}) ([]byte, error) {
-	if m, ok := v.(proto.Message); ok {
-		// use canonical JSON encoding for protobufs (instead of [encoding/json])
-		// https://protobuf.dev/programming-guides/proto3/#json
-		return protojson.MarshalOptions{
-			AllowPartial: true,
-			// protobuf defaults to camel case for JSON encoding; use proto field name instead (snake case)
-			UseProtoNames: true,
-		}.Marshal(m)
-	}
+	return encodeBuffer(&bytes.Buffer{}, v)
+}
 
-	buf := &bytes.Buffer{}
+func encodeBuffer(buf *bytes.Buffer, v interface{}) ([]byte, error) {
 	enc := json.NewEncoder(buf)
 	enc.SetEscapeHTML(false)
 	enc.SetIndent("", "")
 
 	if err := enc.Encode(v); err != nil {
+		err = fmt.Errorf("could not marshall %T to JSON for logging: %w", v, err)
 		return nil, err
 	}
 
