@@ -1,3 +1,6 @@
+//go:build !remote
+// +build !remote
+
 package libimage
 
 import (
@@ -138,7 +141,6 @@ func (r *Runtime) Pull(ctx context.Context, name string, pullPolicy config.PullP
 
 	// Dispatch the copy operation.
 	switch ref.Transport().Name() {
-
 	// DOCKER REGISTRY
 	case registryTransport.Transport.Name():
 		pulledImages, pullError = r.copyFromRegistry(ctx, ref, possiblyUnqualifiedName, pullPolicy, options)
@@ -218,7 +220,6 @@ func (r *Runtime) copyFromDefault(ctx context.Context, ref types.ImageReference,
 	// Figure out a name for the storage destination.
 	var storageName, imageName string
 	switch ref.Transport().Name() {
-
 	case dockerDaemonTransport.Transport.Name():
 		// Normalize to docker.io if needed (see containers/podman/issues/10998).
 		named, err := reference.ParseNormalizedNamed(ref.StringWithinTransport())
