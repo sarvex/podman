@@ -72,9 +72,11 @@ type BudResults struct {
 	From                string
 	Iidfile             string
 	Label               []string
+	LayerLabel          []string
 	Logfile             string
 	LogSplitByPlatform  bool
 	Manifest            string
+	NoHostname          bool
 	NoHosts             bool
 	NoCache             bool
 	Timestamp           int64
@@ -103,9 +105,11 @@ type BudResults struct {
 	LogRusage           bool
 	RusageLogFile       string
 	UnsetEnvs           []string
+	UnsetLabels         []string
 	Envs                []string
 	OSFeatures          []string
 	OSVersion           string
+	CWOptions           string
 }
 
 // FromAndBugResults represents the results for common flags
@@ -192,7 +196,7 @@ func GetNameSpaceFlagsCompletions() commonComp.FlagCompletions {
 func GetLayerFlags(flags *LayerResults) pflag.FlagSet {
 	fs := pflag.FlagSet{}
 	fs.BoolVar(&flags.ForceRm, "force-rm", false, "always remove intermediate containers after a build, even if the build is unsuccessful.")
-	fs.BoolVar(&flags.Layers, "layers", UseLayers(), "cache intermediate layers during build. Use BUILDAH_LAYERS environment variable to override.")
+	fs.BoolVar(&flags.Layers, "layers", UseLayers(), "use intermediate layers during build. Use BUILDAH_LAYERS environment variable to override.")
 	return fs
 }
 
@@ -216,6 +220,7 @@ func GetBudFlags(flags *BudResults) pflag.FlagSet {
 	fs.BoolVar(&flags.Compress, "compress", false, "this is a legacy option, which has no effect on the image")
 	fs.StringArrayVar(&flags.CPPFlags, "cpp-flag", []string{}, "set additional flag to pass to C preprocessor (cpp)")
 	fs.StringVar(&flags.Creds, "creds", "", "use `[username[:password]]` for accessing the registry")
+	fs.StringVarP(&flags.CWOptions, "cw", "", "", "confidential workload `options`")
 	fs.BoolVarP(&flags.DisableCompression, "disable-compression", "D", true, "don't compress layers by default")
 	fs.BoolVar(&flags.DisableContentTrust, "disable-content-trust", false, "this is a Docker specific option and is a NOOP")
 	fs.StringArrayVar(&flags.Envs, "env", []string{}, "set environment variable for the image")
@@ -226,6 +231,7 @@ func GetBudFlags(flags *BudResults) pflag.FlagSet {
 	fs.StringVar(&flags.Iidfile, "iidfile", "", "`file` to write the image ID to")
 	fs.IntVar(&flags.Jobs, "jobs", 1, "how many stages to run in parallel")
 	fs.StringArrayVar(&flags.Label, "label", []string{}, "set metadata for an image (default [])")
+	fs.StringArrayVar(&flags.LayerLabel, "layer-label", []string{}, "set metadata for an intermediate image (default [])")
 	fs.StringVar(&flags.Logfile, "logfile", "", "log to `file` instead of stdout/stderr")
 	fs.BoolVar(&flags.LogSplitByPlatform, "logsplit", false, "split logfile to different files for each platform")
 	fs.Int("loglevel", 0, "NO LONGER USED, flag ignored, and hidden")
@@ -241,8 +247,9 @@ func GetBudFlags(flags *BudResults) pflag.FlagSet {
 		panic(fmt.Sprintf("error marking the rusage-logfile flag as hidden: %v", err))
 	}
 	fs.StringVar(&flags.Manifest, "manifest", "", "add the image to the specified manifest list. Creates manifest list if it does not exist")
-	fs.BoolVar(&flags.NoHosts, "no-hosts", false, "do not create new /etc/hosts files for RUN instructions, use the one from the base image.")
 	fs.BoolVar(&flags.NoCache, "no-cache", false, "do not use existing cached images for the container build. Build from the start with a new set of cached layers.")
+	fs.BoolVar(&flags.NoHostname, "no-hostname", false, "do not create new /etc/hostname file for RUN instructions, use the one from the base image.")
+	fs.BoolVar(&flags.NoHosts, "no-hosts", false, "do not create new /etc/hosts file for RUN instructions, use the one from the base image.")
 	fs.String("os", runtime.GOOS, "set the OS to the provided value instead of the current operating system of the host")
 	fs.StringArrayVar(&flags.OSFeatures, "os-feature", []string{}, "set required OS `feature` for the target image in addition to values from the base image")
 	fs.StringVar(&flags.OSVersion, "os-version", "", "set required OS `version` for the target image instead of the value from the base image")
@@ -269,7 +276,7 @@ func GetBudFlags(flags *BudResults) pflag.FlagSet {
 		panic(fmt.Sprintf("error marking the signature-policy flag as hidden: %v", err))
 	}
 	fs.BoolVar(&flags.SkipUnusedStages, "skip-unused-stages", true, "skips stages in multi-stage builds which do not affect the final target")
-	fs.BoolVar(&flags.Squash, "squash", false, "squash newly built layers into a single new layer")
+	fs.BoolVar(&flags.Squash, "squash", false, "squash all image layers into a single layer")
 	fs.StringArrayVar(&flags.SSH, "ssh", []string{}, "SSH agent socket or keys to expose to the build. (format: default|<id>[=<socket>|<key>[,<key>]])")
 	fs.BoolVar(&flags.Stdin, "stdin", false, "pass stdin into containers")
 	fs.StringArrayVarP(&flags.Tag, "tag", "t", []string{}, "tagged `name` to apply to the built image")
@@ -279,6 +286,7 @@ func GetBudFlags(flags *BudResults) pflag.FlagSet {
 	fs.BoolVar(&flags.TLSVerify, "tls-verify", true, "require HTTPS and verify certificates when accessing the registry")
 	fs.String("variant", "", "override the `variant` of the specified image")
 	fs.StringSliceVar(&flags.UnsetEnvs, "unsetenv", nil, "unset environment variable from final image")
+	fs.StringSliceVar(&flags.UnsetLabels, "unsetlabel", nil, "unset label when inheriting labels from base image")
 	return fs
 }
 
@@ -297,6 +305,7 @@ func GetBudFlagsCompletions() commonComp.FlagCompletions {
 	flagCompletion["cert-dir"] = commonComp.AutocompleteDefault
 	flagCompletion["cpp-flag"] = commonComp.AutocompleteNone
 	flagCompletion["creds"] = commonComp.AutocompleteNone
+	flagCompletion["cw"] = commonComp.AutocompleteNone
 	flagCompletion["env"] = commonComp.AutocompleteNone
 	flagCompletion["file"] = commonComp.AutocompleteDefault
 	flagCompletion["format"] = commonComp.AutocompleteNone
@@ -306,6 +315,7 @@ func GetBudFlagsCompletions() commonComp.FlagCompletions {
 	flagCompletion["iidfile"] = commonComp.AutocompleteDefault
 	flagCompletion["jobs"] = commonComp.AutocompleteNone
 	flagCompletion["label"] = commonComp.AutocompleteNone
+	flagCompletion["layer-label"] = commonComp.AutocompleteNone
 	flagCompletion["logfile"] = commonComp.AutocompleteDefault
 	flagCompletion["manifest"] = commonComp.AutocompleteDefault
 	flagCompletion["os"] = commonComp.AutocompleteNone
@@ -322,6 +332,7 @@ func GetBudFlagsCompletions() commonComp.FlagCompletions {
 	flagCompletion["target"] = commonComp.AutocompleteNone
 	flagCompletion["timestamp"] = commonComp.AutocompleteNone
 	flagCompletion["unsetenv"] = commonComp.AutocompleteNone
+	flagCompletion["unsetlabel"] = commonComp.AutocompleteNone
 	flagCompletion["variant"] = commonComp.AutocompleteNone
 	return flagCompletion
 }
@@ -348,10 +359,10 @@ func GetFromAndBudFlags(flags *FromAndBudResults, usernsResults *UserNSResults, 
 	fs.StringVar(&flags.CPUSetCPUs, "cpuset-cpus", "", "CPUs in which to allow execution (0-3, 0,1)")
 	fs.StringVar(&flags.CPUSetMems, "cpuset-mems", "", "memory nodes (MEMs) in which to allow execution (0-3, 0,1). Only effective on NUMA systems.")
 	fs.StringSliceVar(&flags.DecryptionKeys, "decryption-key", nil, "key needed to decrypt the image")
-	fs.StringArrayVar(&flags.Devices, "device", defaultContainerConfig.Containers.Devices, "additional devices to be used within containers (default [])")
-	fs.StringSliceVar(&flags.DNSSearch, "dns-search", defaultContainerConfig.Containers.DNSSearches, "set custom DNS search domains")
-	fs.StringSliceVar(&flags.DNSServers, "dns", defaultContainerConfig.Containers.DNSServers, "set custom DNS servers or disable it completely by setting it to 'none', which prevents the automatic creation of `/etc/resolv.conf`.")
-	fs.StringSliceVar(&flags.DNSOptions, "dns-option", defaultContainerConfig.Containers.DNSOptions, "set custom DNS options")
+	fs.StringArrayVar(&flags.Devices, "device", defaultContainerConfig.Containers.Devices.Get(), "additional devices to be used within containers (default [])")
+	fs.StringSliceVar(&flags.DNSSearch, "dns-search", defaultContainerConfig.Containers.DNSSearches.Get(), "set custom DNS search domains")
+	fs.StringSliceVar(&flags.DNSServers, "dns", defaultContainerConfig.Containers.DNSServers.Get(), "set custom DNS servers or disable it completely by setting it to 'none', which prevents the automatic creation of `/etc/resolv.conf`.")
+	fs.StringSliceVar(&flags.DNSOptions, "dns-option", defaultContainerConfig.Containers.DNSOptions.Get(), "set custom DNS options")
 	fs.BoolVar(&flags.HTTPProxy, "http-proxy", true, "pass through HTTP Proxy environment variables")
 	fs.StringVar(&flags.Isolation, "isolation", DefaultIsolation(), "`type` of process isolation to use. Use BUILDAH_ISOLATION environment variable to override.")
 	fs.StringVarP(&flags.Memory, "memory", "m", "", "memory limit (format: <number>[<unit>], where unit = b, k, m or g)")
@@ -360,12 +371,12 @@ func GetFromAndBudFlags(flags *FromAndBudResults, usernsResults *UserNSResults, 
 	fs.StringVar(&flags.RetryDelay, "retry-delay", PullPushRetryDelay.String(), "delay between retries in case of push/pull failures")
 	fs.String("arch", runtime.GOARCH, "set the ARCH of the image to the provided value instead of the architecture of the host")
 	fs.String("os", runtime.GOOS, "prefer `OS` instead of the running OS when pulling images")
-	fs.StringSlice("platform", []string{parse.DefaultPlatform()}, "set the OS/ARCH/VARIANT of the image to the provided value instead of the current operating system and architecture of the host (for example `linux/arm`)")
+	fs.StringSlice("platform", []string{parse.DefaultPlatform()}, "set the `OS/ARCH[/VARIANT]` of the image to the provided value instead of the current operating system and architecture of the host (for example \"linux/arm\")")
 	fs.String("variant", "", "override the `variant` of the specified image")
 	fs.StringArrayVar(&flags.SecurityOpt, "security-opt", []string{}, "security options (default [])")
 	fs.StringVar(&flags.ShmSize, "shm-size", defaultContainerConfig.Containers.ShmSize, "size of '/dev/shm'. The format is `<number><unit>`.")
-	fs.StringSliceVar(&flags.Ulimit, "ulimit", defaultContainerConfig.Containers.DefaultUlimits, "ulimit options")
-	fs.StringArrayVarP(&flags.Volumes, "volume", "v", defaultContainerConfig.Containers.Volumes, "bind mount a volume into the container")
+	fs.StringSliceVar(&flags.Ulimit, "ulimit", defaultContainerConfig.Containers.DefaultUlimits.Get(), "ulimit options")
+	fs.StringArrayVarP(&flags.Volumes, "volume", "v", defaultContainerConfig.Volumes(), "bind mount a volume into the container")
 
 	// Add in the usernamespace and namespaceflags
 	usernsFlags := GetUserNSFlags(usernsResults)
