@@ -23,7 +23,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/coreos/stream-metadata-go v0.4.3
 	github.com/crc-org/vfkit v0.1.1
-	github.com/cyphar/filepath-securejoin v0.2.3
+	github.com/cyphar/filepath-securejoin v0.2.4
 	github.com/digitalocean/go-qemu v0.0.0-20230711162256-2e3d0186973e
 	github.com/docker/distribution v2.8.2+incompatible
 	github.com/docker/docker v24.0.5+incompatible
@@ -63,15 +63,15 @@ require (
 	github.com/vishvananda/netlink v1.2.1-beta.2
 	go.etcd.io/bbolt v1.3.7
 	golang.org/x/exp v0.0.0-20230801115018-d63ba01acd4b
-	golang.org/x/net v0.14.0
-	golang.org/x/sync v0.3.0
-	golang.org/x/sys v0.11.0
-	golang.org/x/term v0.11.0
-	golang.org/x/text v0.12.0
-	google.golang.org/protobuf v1.31.0
+	golang.org/x/net v0.23.0
+	golang.org/x/sync v0.5.0
+	golang.org/x/sys v0.18.0
+	golang.org/x/term v0.18.0
+	golang.org/x/text v0.14.0
+	google.golang.org/protobuf v1.33.0
 	gopkg.in/inf.v0 v0.9.1
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/kubernetes v1.28.1
+	k8s.io/kubernetes v1.28.9
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -124,7 +124,7 @@ require (
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/go-containerregistry v0.15.2 // indirect
 	github.com/google/go-intervals v0.0.2 // indirect
@@ -185,13 +185,13 @@ require (
 	go.opentelemetry.io/otel/metric v1.16.0 // indirect
 	go.opentelemetry.io/otel/trace v1.16.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
-	golang.org/x/crypto v0.12.0 // indirect
-	golang.org/x/mod v0.12.0 // indirect
+	golang.org/x/crypto v0.21.0 // indirect
+	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/oauth2 v0.11.0 // indirect
-	golang.org/x/tools v0.12.0 // indirect
+	golang.org/x/tools v0.16.1 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230711160842-782d3b101e98 // indirect
-	google.golang.org/grpc v1.56.2 // indirect
+	google.golang.org/grpc v1.56.3 // indirect
 	gopkg.in/go-jose/go-jose.v2 v2.6.1 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
