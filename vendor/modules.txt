@@ -410,7 +410,7 @@ github.com/crc-org/vfkit/pkg/util
 # github.com/cyberphone/json-canonicalization v0.0.0-20230710064741-aa7fe85c7dbd
 ## explicit
 github.com/cyberphone/json-canonicalization/go/src/webpki.org/jsoncanonicalizer
-# github.com/cyphar/filepath-securejoin v0.2.3
+# github.com/cyphar/filepath-securejoin v0.2.4
 ## explicit; go 1.13
 github.com/cyphar/filepath-securejoin
 # github.com/davecgh/go-spew v1.1.1
@@ -809,7 +809,7 @@ github.com/opencontainers/go-digest
 ## explicit; go 1.18
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/opencontainers/runc v1.1.9 => github.com/opencontainers/runc v1.1.9
+# github.com/opencontainers/runc v1.1.12 => github.com/opencontainers/runc v1.1.12
 ## explicit; go 1.17
 github.com/opencontainers/runc/libcontainer/apparmor
 github.com/opencontainers/runc/libcontainer/cgroups
@@ -1277,4 +1277,4 @@ k8s.io/kubernetes/third_party/forked/golang/expansion
 # sigs.k8s.io/yaml v1.3.0
 ## explicit; go 1.12
 sigs.k8s.io/yaml
-# github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.9
+# github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.12
